@@ -637,7 +637,7 @@ public class CyanArrowsScript : MonoBehaviour
 	
 	//twitch plays
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"To press the start the sequence, use the command !{0} play | To proceed to the submission part of the module, use the command !{0} proceed | To submit a string of directions on a stage, use the command !{0} submit [a string of directions] (Example: !{0} submit URDL) | Valid Directions: U/R/D/L/N/E/W/S";
+    private readonly string TwitchHelpMessage = @"To play the sequence, use the command !{0} play | To proceed to the submission part of the module, use the command !{0} proceed | To submit a string of directions on a stage, use the command !{0} submit [a string of directions] (Example: !{0} submit URDL) | Valid Directions: U/R/D/L/N/E/W/S";
     #pragma warning restore 414
 	
 	char[] ValidDirections = {'U', 'R', 'D', 'L', 'N', 'E', 'W', 'S'};
