@@ -36,7 +36,7 @@ public class CyanArrowsScript : MonoBehaviour
 	List<string> SubmittedWalls = new List<string>();
 	string[] Directions = {"U", "R", "D", "L"};
 	char[] DirectionsChar = {'U', 'R', 'D', 'L'};
-	Coroutine Jukebox, ColorParty, MarchOrder;
+	Coroutine Jukebox, ColorParty;
 
 	string TempWall = "";
 	int TheNumber = 20, MarchNumber = 0;
@@ -88,7 +88,7 @@ public class CyanArrowsScript : MonoBehaviour
 							AddToLog2 += x < SubmittedWalls.Count() - 1 ? " / " : "";
 						}
 						Debug.LogFormat("[Cyan Arrows #{0}] {1}", moduleId, AddToLog2);
-						MarchOrder = StartCoroutine(March());
+						StartCoroutine(March());
 					}
 					
 					else
@@ -421,7 +421,7 @@ public class CyanArrowsScript : MonoBehaviour
 				}
 				StopCoroutine(Jukebox);
 				StopCoroutine(ColorParty);
-				StopCoroutine(MarchOrder);
+				goto TheEnd;
 			}
 			
 			if (CorrectDirections[a] == "EMPTY" )
@@ -436,7 +436,7 @@ public class CyanArrowsScript : MonoBehaviour
 				StartCoroutine(DelayedCollision(a, Directions[(Array.IndexOf(Directions, CorrectDirections[a]) + 2) % 4]));
 				StopCoroutine(Jukebox);
 				StopCoroutine(ColorParty);
-				StopCoroutine(MarchOrder);
+				goto TheEnd;
 			}
 			
 			if (MarchNumber < 19)
@@ -481,6 +481,8 @@ public class CyanArrowsScript : MonoBehaviour
 		MusicPlayer.Play();
 		Module.HandlePass();
 		Debug.LogFormat("[Cyan Arrows #{0}] The car has been guided safely. You are safe. :)", moduleId);
+		TheEnd:
+		yield break;
 	}
 	
 	IEnumerator SendToTheAbyss(int y)
@@ -490,7 +492,6 @@ public class CyanArrowsScript : MonoBehaviour
 		{
 			ArrowHeads[x].material.color = !SubmittedWalls[y].Contains(DirectionsChar[x]) ? new Color(0, 255f/255f, 255f/255f) : Color.black;
 		}
-		
 		string FallDirection = Walls[y];
 		if (SubmittedWalls[y].Length != 0)
 		{
@@ -529,14 +530,14 @@ public class CyanArrowsScript : MonoBehaviour
 		{
 			ArrowHeads[x].material.color = !SubmittedWalls[y].Contains(DirectionsChar[x]) ? new Color(0, 255f/255f, 255f/255f) : Color.black;
 		}
+		Module.HandleStrike();
 		MusicPlayer.clip = SFX[8];
 		MusicPlayer.Play();
 		ArrowHeads[Array.IndexOf(Directions, RedPoint)].material.color = new Color32(255, 0, 0, 255);
 		while (MusicPlayer.isPlaying)
 		{
 			yield return new WaitForSecondsRealtime(.01f);
-		}
-		Module.HandleStrike();		
+		}	
 		StartCoroutine(BounceBack());
 	}
 	
@@ -547,6 +548,7 @@ public class CyanArrowsScript : MonoBehaviour
 		{
 			ArrowHeads[x].material.color = !SubmittedWalls[y + 1].Contains(DirectionsChar[x]) ? new Color(0, 255f/255f, 255f/255f) : Color.black;
 		}
+		Module.HandleStrike();	
 		MusicPlayer.clip = SFX[8];
 		MusicPlayer.Play();
 		ArrowHeads[Array.IndexOf(Directions, RedPoint2)].material.color = new Color32(255, 0, 0, 255);
@@ -555,7 +557,6 @@ public class CyanArrowsScript : MonoBehaviour
 		{
 			yield return new WaitForSecondsRealtime(.01f);
 		}
-		Module.HandleStrike();	
 		StartCoroutine(BounceBack());
 	}
 	
