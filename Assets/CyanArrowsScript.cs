@@ -495,9 +495,9 @@ public class CyanArrowsScript : MonoBehaviour
 		string FallDirection = Walls[y];
 		if (SubmittedWalls[y].Length != 0)
 		{
-			foreach (string c in SubmittedWalls[y].Split())
+			for (int x = 0; x < SubmittedWalls[y].Length; x++)
 			{
-				FallDirection = FallDirection.Replace(c, string.Empty);
+				FallDirection = FallDirection.Replace(SubmittedWalls[y][x].ToString(), string.Empty);
 			}
 		}
 		ArrowHeads[Array.IndexOf(Directions, FallDirection[UnityEngine.Random.Range(0, FallDirection.Length)].ToString())].material.color = Color.white;
