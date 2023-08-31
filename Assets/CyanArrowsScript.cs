@@ -635,10 +635,40 @@ public class CyanArrowsScript : MonoBehaviour
 		Array.Sort(characters);
 		return new string(characters);
 	}
-	
-	//twitch plays
-    #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"To play the sequence, use the command !{0} play | To proceed to the submission part of the module, use the command !{0} proceed | To submit a string of directions on a stage, use the command !{0} submit [a string of directions] (Example: !{0} submit URDL) | Valid Directions: U/R/D/L/N/E/W/S";
+
+    //Twitch Plays
+
+    protected IEnumerator Moves(string input)
+    {
+        for (int x = 0; x < input.Length; x++)
+        {
+            switch (input[x].ToString().ToUpper())
+            {
+                case "N":
+                case "U":
+                    buttons[0].OnInteract();
+                    break;
+                case "E":
+                case "R":
+                    buttons[1].OnInteract();
+                    break;
+                case "S":
+                case "D":
+                    buttons[2].OnInteract();
+                    break;
+                case "W":
+                case "L":
+                    buttons[3].OnInteract();
+                    break;
+                default:
+                    break;
+            }
+            yield return new WaitForSecondsRealtime(0.1f);
+        }
+    }
+
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = @"To play the sequence, use the command !{0} play | To proceed to the submission part of the module, use the command !{0} proceed | To submit a string of directions on a stage, use the command !{0} submit [string] (Example: !{0} submit URDL) | This module is capable of submitting multiple stages where a space triggers the display (Example: !{0} submit URDL URDL) | Valid Directions: U/R/D/L/N/E/W/S";
     #pragma warning restore 414
 	
 	char[] ValidDirections = {'U', 'R', 'D', 'L', 'N', 'E', 'W', 'S'};
@@ -646,91 +676,80 @@ public class CyanArrowsScript : MonoBehaviour
     IEnumerator ProcessTwitchCommand(string command)
     {
 		string[] parameters = command.Split(' ');
-        if (Regex.IsMatch(command, @"^\s*play\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+        Match match = Regex.Match(command, @"^\s*(play|proceed|submit)(?=\s+|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        if (match.Success)
         {
-			yield return null;
-			if (!Interactable || SubmittablePhase)
-			{
-				yield return "sendtochaterror You are not able to use the \"play\" command at this moment. Command ignored.";
-				yield break;
-			}
-            Display.OnInteract();
-			yield return new WaitForSecondsRealtime(0.1f);
-			Display.OnInteractEnded();
+            yield return null;
+            switch (match.Groups[1].Value.ToLower())
+            {
+                case "play":
+                    if (!Interactable || SubmittablePhase)
+                    {
+                        yield return "sendtochaterror You are not able to use the \"play\" command at this moment. Command ignored.";
+                        yield break;
+                    }
+                    Display.OnInteract();
+                    yield return new WaitForSecondsRealtime(0.1f);
+                    Display.OnInteractEnded();
+                    break;
+
+                case "proceed":
+                    if (!Interactable || SubmittablePhase)
+                    {
+                        yield return "sendtochaterror You are not able to use the \"proceed\" command at this moment. Command ignored.";
+                        yield break;
+                    }
+                    Display.OnInteract();
+                    yield return new WaitForSecondsRealtime(3f);
+                    Display.OnInteractEnded();
+                    break;
+
+                case "submit":
+                    if (!Interactable || !SubmittablePhase)
+                    {
+                        yield return "sendtochaterror You are not able to use the \"submit\" command at this moment. Command ignored.";
+                        yield break;
+                    }
+
+                    if (parameters.Length < 2)
+                    {
+                        yield return "sendtochaterror Parameter length invalid. Command ignored.";
+                        yield break;
+                    }
+
+                    for (int i = 1; i < parameters.Length; i++)
+                    {
+                        if (!parameters[i].ToUpper().ToCharArray().All(c => ValidDirections.Contains(c)))
+                        {
+                            yield return "sendtochaterror The command: '" + parameters[i] + "', contains an invalid direction. Command ignored.";
+                            yield break;
+                        }
+
+                        if (parameters[i].ToUpper().GroupBy(x => x).Any(g => g.Count() > 1))
+                        {
+                            yield return "sendtochaterror The command: '" + parameters[i] +"', contains a duplicate direction (which I do not allow). Command ignored.";
+                            yield break;
+                        }
+
+                        if (!Regex.IsMatch(parameters[i], @"^\s*$"))
+                        {
+							yield return null;
+                            yield return Moves(parameters[i]);
+                            Display.OnInteract();
+                            yield return new WaitForSecondsRealtime(.2f);
+                        }
+                    }
+                    break;
+
+
+            }
+
+            if (numDisplay.GetComponent<TextMesh>().text == "20")
+            {
+                yield return "strike";
+                yield return "solve";
+            }
         }
-		
-        if (Regex.IsMatch(command, @"^\s*proceed\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-        {
-			yield return null;
-			if (!Interactable || SubmittablePhase)
-			{
-				yield return "sendtochaterror You are not able to use the \"proceed\" command at this moment. Command ignored.";
-				yield break;
-			}
-            Display.OnInteract();
-			yield return new WaitForSecondsRealtime(3f);
-			Display.OnInteractEnded();
-        }
-		
-		if (Regex.IsMatch(parameters[0], @"^\s*submit\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-        {
-			yield return null;
-			if (parameters.Length != 2)
-			{
-				yield return "sendtochaterror Parameter length invalid. Command ignored.";
-				yield break;
-			}
-			
-			if (!Interactable || !SubmittablePhase)
-			{
-				yield return "sendtochaterror You are not able to use the \"submit\" command at this moment. Command ignored.";
-				yield break;
-			}
-			
-			if (!parameters[1].ToUpper().ToCharArray().All(c => ValidDirections.Contains(c)))
-			{
-				yield return "sendtochaterror The command contains an invalid direction. Command ignored.";
-				yield break;
-			}
-			
-			if (parameters[1].ToUpper().GroupBy(x => x).Any(g => g.Count() > 1))
-			{
-				yield return "sendtochaterror The command contains a duplicate direction (which I do not allow). Command ignored.";
-				yield break;
-			}
-			
-			for (int x = 0; x < parameters[1].Length; x++)
-			{
-				switch (parameters[1][x].ToString().ToUpper())
-				{
-					case "N":
-					case "U":
-						buttons[0].OnInteract();
-						break;
-					case "E":
-					case "R":
-						buttons[1].OnInteract();
-						break;
-					case "S":
-					case "D":
-						buttons[2].OnInteract();
-						break;
-					case "W":
-					case "L":
-						buttons[3].OnInteract();
-						break;
-					default:
-						break;
-				}
-				yield return new WaitForSecondsRealtime(0.1f);
-			}
-			
-			if (numDisplay.GetComponent<TextMesh>().text == "20")
-			{
-				yield return "strike";
-				yield return "solve";
-			}
-			Display.OnInteract();
-		}
     }
 }
